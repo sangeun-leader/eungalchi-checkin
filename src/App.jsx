@@ -213,7 +213,7 @@ export default function App(){
   const selectedArr=[...selectedIds];
 
   if(loadState==="loading")return(
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Noto Sans KR',sans-serif"}}>
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nanum Gothic','나눔고딕',sans-serif"}}>
       <div style={{textAlign:"center"}}>
         <div style={{fontSize:48,marginBottom:16}}>🐟</div>
         <div style={{fontSize:17,fontWeight:700,color:C.primary,marginBottom:6}}>은갈치영어학원</div>
@@ -224,7 +224,7 @@ export default function App(){
     </div>
   );
   if(loadState==="error")return(
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Noto Sans KR',sans-serif"}}>
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Nanum Gothic','나눔고딕',sans-serif"}}>
       <div style={{textAlign:"center",maxWidth:380}}>
         <div style={{fontSize:44,marginBottom:12}}>😅</div>
         <div style={{fontSize:16,fontWeight:700,color:C.red,marginBottom:8}}>명단을 불러올 수 없어요</div>
@@ -236,9 +236,9 @@ export default function App(){
   );
 
   return(
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif",color:C.text,maxWidth:800,margin:"0 auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nanum Gothic','나눔고딕',sans-serif",color:C.text,maxWidth:800,margin:"0 auto"}}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         input,select,button{font-family:inherit;outline:none !important;-webkit-tap-highlight-color:transparent;}
         button{-webkit-appearance:none;cursor:pointer;}
@@ -266,7 +266,7 @@ export default function App(){
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <span className="fish" style={{fontSize:26}}>🐟</span>
           <div>
-            <div style={{fontWeight:900,fontSize:18,color:C.primary,letterSpacing:-0.5}}>은갈치영어학원</div>
+            <div style={{fontWeight:800,fontSize:17,color:"#000000",letterSpacing:-0.5,lineHeight:1.3}}>은갈치영어학원<br/><span style={{fontSize:11,fontWeight:700,color:C.textMd,letterSpacing:0}}>재시실 입퇴실 관리 시스템</span></div>
             <div style={{fontSize:11,color:C.textSub}}>명단 업데이트: {lastUpdated||"—"}{loadError&&<span style={{color:C.amber}}> · {loadError}</span>}</div>
           </div>
         </div>
