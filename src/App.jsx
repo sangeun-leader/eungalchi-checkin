@@ -197,56 +197,66 @@ const STUDENTS = [
   { id:194,name:"이건호",     class:"대곡고1 라이언",     grade:"고1", school:"대곡고", teacher:"노미진", parent:"010-9394-7540" },
 ];
 
-const GRADE_CLR={"중1":"#60a5fa","중2":"#34d399","중3":"#a78bfa","고1":"#fb923c","고2":"#f472b6","고3":"#f87171"};
-const TEACHERS=["전체","노미진","박혜린","김상은","김도은"];
-const todayStr=()=>new Date().toISOString().slice(0,10);
-const fmt=d=>new Date(d).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-const fmtDateShort=d=>{const dt=new Date(d);const days=["일","월","화","수","목","금","토"];return `${String(dt.getMonth()+1).padStart(2,"0")}월 ${String(dt.getDate()).padStart(2,"0")}일(${days[dt.getDay()]})`};
-const fmtNotif=d=>{const dt=new Date(d);const days=["일","월","화","수","목","금","토"];const mm=String(dt.getMonth()+1).padStart(2,"0");const dd=String(dt.getDate()).padStart(2,"0");const hh=String(dt.getHours()).padStart(2,"0");const mn=String(dt.getMinutes()).padStart(2,"0");const ss=String(dt.getSeconds()).padStart(2,"0");return `${mm}월 ${dd}일(${days[dt.getDay()]}) ${hh}:${mn}:${ss}`};
-const elapsed=(a,b)=>{const m=Math.floor((new Date(b)-new Date(a))/60000),s=Math.floor(((new Date(b)-new Date(a))%60000)/1000);return m>0?`${m}분 ${s}초`:`${s}초`};
-const toE164=p=>p.replace(/-/g,"").replace(/^0/,"82");
-const CHOSUNG=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const toCs=str=>[...str].map(c=>{const code=c.charCodeAt(0);return(code>=0xAC00&&code<=0xD7A3)?CHOSUNG[Math.floor((code-0xAC00)/588)]:c;}).join('');
-const kmatch=(q,t)=>!q?false:t.includes(q)||toCs(t).includes(toCs(q));
-
-const stor={
-  get:k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}},
-  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}},
+// ── 색상 팔레트 (따뜻하고 밝은 톤) ──
+const C = {
+  bg:       "#FFF8F0",       // 크림 배경
+  bgCard:   "#FFFFFF",       // 카드 흰색
+  bgSub:    "#FFF3E6",       // 연한 오렌지 배경
+  border:   "#FDDCB5",       // 따뜻한 테두리
+  borderSub:"#FFE8CC",
+  primary:  "#F97316",       // 오렌지
+  primaryDk:"#EA6A0A",
+  primaryLt:"#FFF0E6",
+  amber:    "#F59E0B",
+  amberLt:  "#FFFBEB",
+  green:    "#16A34A",
+  greenLt:  "#F0FDF4",
+  blue:     "#2563EB",
+  blueLt:   "#EFF6FF",
+  red:      "#DC2626",
+  redLt:    "#FEF2F2",
+  text:     "#1C0A00",       // 따뜻한 진갈색
+  textMd:   "#7C4A1E",       // 중간 갈색
+  textSub:  "#A87650",       // 연한 갈색
+  textFaint:"#D4A97A",
 };
 
-async function sendSMS(apiKey,apiSecret,from,to,text){
-  const date=new Date().toISOString(),salt=Math.random().toString(36).slice(2,18);
-  const enc=new TextEncoder(),k=await crypto.subtle.importKey("raw",enc.encode(apiSecret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+const GRADE_CLR = { "중1":"#3B82F6","중2":"#10B981","중3":"#8B5CF6","고1":"#F97316","고2":"#EC4899","고3":"#EF4444" };
+const TEACHERS = ["전체","노미진","박혜린","김상은","김도은"];
+const todayStr = () => new Date().toISOString().slice(0,10);
+const fmt = d => new Date(d).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+const fmtDateShort = d => { const dt=new Date(d); const days=["일","월","화","수","목","금","토"]; return `${String(dt.getMonth()+1).padStart(2,"0")}월 ${String(dt.getDate()).padStart(2,"0")}일(${days[dt.getDay()]})`; };
+const fmtNotif = d => { const dt=new Date(d); const days=["일","월","화","수","목","금","토"]; return `${String(dt.getMonth()+1).padStart(2,"0")}월 ${String(dt.getDate()).padStart(2,"0")}일(${days[dt.getDay()]}) ${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}:${String(dt.getSeconds()).padStart(2,"0")}`; };
+const elapsed = (a,b) => { const m=Math.floor((new Date(b)-new Date(a))/60000),s=Math.floor(((new Date(b)-new Date(a))%60000)/1000); return m>0?`${m}분 ${s}초`:`${s}초`; };
+const toE164 = p => p.replace(/-/g,"").replace(/^0/,"82");
+const CHOSUNG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const toCs = str => [...str].map(c=>{ const code=c.charCodeAt(0); return (code>=0xAC00&&code<=0xD7A3)?CHOSUNG[Math.floor((code-0xAC00)/588)]:c; }).join('');
+const kmatch = (q,t) => !q?false:t.includes(q)||toCs(t).includes(toCs(q));
+
+const stor = {
+  get: k => { try { const v=localStorage.getItem(k); return v?JSON.parse(v):null; } catch { return null; } },
+  set: (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} },
+};
+
+async function sendSMS(apiKey,apiSecret,from,to,text) {
+  const date=new Date().toISOString(), salt=Math.random().toString(36).slice(2,18);
+  const enc=new TextEncoder(), k=await crypto.subtle.importKey("raw",enc.encode(apiSecret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
   const sig=await crypto.subtle.sign("HMAC",k,enc.encode(date+salt));
   const hex=Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,"0")).join("");
-  const auth=`HMAC-SHA256 apiKey=${apiKey}, date=${date}, salt=${salt}, signature=${hex}`;
-  const res=await fetch("https://api.solapi.com/messages/v4/send",{method:"POST",headers:{"Content-Type":"application/json",Authorization:auth},body:JSON.stringify({message:{to:toE164(to),from:toE164(from),text}})});
+  const res=await fetch("https://api.solapi.com/messages/v4/send",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`HMAC-SHA256 apiKey=${apiKey}, date=${date}, salt=${salt}, signature=${hex}`},body:JSON.stringify({message:{to:toE164(to),from:toE164(from),text}})});
   if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.errorMessage||`HTTP ${res.status}`);}
 }
 
-function exportCSV(date,records,retakeIds){
+function exportCSV(date,records,retakeIds) {
   const header="날짜,이름,반,학년,학교,담당강사,재시대상,입실시각,퇴실시각,소요시간,상태";
   const rows=[];
-  records.forEach(r=>{
-    const s=STUDENTS.find(x=>x.id===r.studentId);if(!s)return;
-    const isRt=retakeIds.includes(s.id);
-    const status=r.outTime?"퇴실완료":"입실중";
-    rows.push([date,s.name,s.class,s.grade,s.school,s.teacher,isRt?"O":"",r.inTime?fmt(r.inTime):"",r.outTime?fmt(r.outTime):"",r.outTime?elapsed(r.inTime,r.outTime):"",status].join(","));
-  });
-  retakeIds.forEach(id=>{
-    if(!records.find(r=>r.studentId===id)){
-      const s=STUDENTS.find(x=>x.id===id);if(!s)return;
-      rows.push([date,s.name,s.class,s.grade,s.school,s.teacher,"O","","","","미응시"].join(","));
-    }
-  });
+  records.forEach(r=>{const s=STUDENTS.find(x=>x.id===r.studentId);if(!s)return;const isRt=retakeIds.includes(s.id);rows.push([date,s.name,s.class,s.grade,s.school,s.teacher,isRt?"O":"",r.inTime?fmt(r.inTime):"",r.outTime?fmt(r.outTime):"",r.outTime?elapsed(r.inTime,r.outTime):"",r.outTime?"퇴실완료":"입실중"].join(","));});
+  retakeIds.forEach(id=>{if(!records.find(r=>r.studentId===id)){const s=STUDENTS.find(x=>x.id===id);if(!s)return;rows.push([date,s.name,s.class,s.grade,s.school,s.teacher,"O","","","","미응시"].join(","));}});
   const csv="\uFEFF"+header+"\n"+rows.join("\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download=`은갈치영어학원_재시_${date}.csv`;a.click();
-  URL.revokeObjectURL(url);
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));a.download=`은갈치영어학원_재시_${date}.csv`;a.click();
 }
 
-export default function App(){
+export default function App() {
   const [view,setView]=useState("checkin");
   const [mode,setMode]=useState("in");
   const [search,setSearch]=useState("");
@@ -264,17 +274,8 @@ export default function App(){
   const [tmpSettings,setTmpSettings]=useState({apiKey:"",apiSecret:"",from:"",adminPass:"1234"});
   const [savedMsg,setSavedMsg]=useState(false);
 
-  useEffect(()=>{
-    const sett=stor.get("settings:eungalchi")||{apiKey:"",apiSecret:"",from:"",adminPass:"1234"};
-    setSettings(sett);setTmpSettings(sett);
-  },[]);
-
-  useEffect(()=>{
-    const recs=stor.get(`checkins:${selDate}`)||[];
-    const ids=stor.get(`retake:${selDate}`)||[];
-    setRecords(recs);setRetakeIds(ids);
-  },[selDate]);
-
+  useEffect(()=>{const s=stor.get("settings:eungalchi")||{apiKey:"",apiSecret:"",from:"",adminPass:"1234"};setSettings(s);setTmpSettings(s);},[]);
+  useEffect(()=>{setRecords(stor.get(`checkins:${selDate}`)||[]);setRetakeIds(stor.get(`retake:${selDate}`)||[]);},[selDate]);
   useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t);},[]);
 
   const isConfigured=settings.apiKey&&settings.apiSecret&&settings.from;
@@ -309,90 +310,420 @@ export default function App(){
 
   const handleSelect=s=>mode==="in"?handleCheckin(s):handleCheckout(s);
 
-  const addToRetake=async s=>{
-    if(retakeIds.includes(s.id))return;
-    const updated=[...retakeIds,s.id];
-    setRetakeIds(updated);stor.set(`retake:${selDate}`,updated);setRetakeSearch("");
-  };
-  const removeFromRetake=async id=>{
-    const updated=retakeIds.filter(x=>x!==id);
-    setRetakeIds(updated);stor.set(`retake:${selDate}`,updated);
-  };
-
-  const handleAdminLogin=()=>{
-    if(adminPass===settings.adminPass){setAdminUnlocked(true);setAdminError(false);setTmpSettings({...settings});setView("dashboard");}
-    else setAdminError(true);
-  };
-  const saveSettings=()=>{
-    setSettings({...tmpSettings});stor.set("settings:eungalchi",tmpSettings);
-    setSavedMsg(true);setTimeout(()=>setSavedMsg(false),2000);
-  };
+  const addToRetake=s=>{if(retakeIds.includes(s.id))return;const u=[...retakeIds,s.id];setRetakeIds(u);stor.set(`retake:${selDate}`,u);setRetakeSearch("");};
+  const removeFromRetake=id=>{const u=retakeIds.filter(x=>x!==id);setRetakeIds(u);stor.set(`retake:${selDate}`,u);};
+  const handleAdminLogin=()=>{if(adminPass===settings.adminPass){setAdminUnlocked(true);setAdminError(false);setTmpSettings({...settings});setView("dashboard");}else setAdminError(true);};
+  const saveSettings=()=>{setSettings({...tmpSettings});stor.set("settings:eungalchi",tmpSettings);setSavedMsg(true);setTimeout(()=>setSavedMsg(false),2000);};
 
   const filteredStudents=search.length>0?STUDENTS.filter(s=>kmatch(search,s.name)||kmatch(search,s.class)):[];
   const retakeFiltered=retakeSearch.length>0?STUDENTS.filter(s=>(kmatch(retakeSearch,s.name)||kmatch(retakeSearch,s.class))&&!retakeIds.includes(s.id)):[];
-
   const allIds=[...new Set([...retakeIds,...records.map(r=>r.studentId)])];
-  const unified=allIds.map(id=>{
-    const student=STUDENTS.find(s=>s.id===id);
-    const rec=records.find(r=>r.studentId===id);
-    const inRetake=retakeIds.includes(id);
-    const status=rec?.outTime?"done":rec?"inside":inRetake?"pending":"extra";
-    return{student,rec,inRetake,status};
-  }).filter(x=>x.student).filter(x=>teacherFilter==="전체"||x.student.teacher===teacherFilter);
-
+  const unified=allIds.map(id=>{const student=STUDENTS.find(s=>s.id===id);const rec=records.find(r=>r.studentId===id);const inRetake=retakeIds.includes(id);const status=rec?.outTime?"done":rec?"inside":inRetake?"pending":"extra";return{student,rec,inRetake,status};}).filter(x=>x.student).filter(x=>teacherFilter==="전체"||x.student.teacher===teacherFilter);
   const pending=unified.filter(x=>x.status==="pending");
   const inside=unified.filter(x=>x.status==="inside");
   const done=unified.filter(x=>x.status==="done");
   const dateShortcuts=[{label:"오늘",val:todayStr()},{label:"어제",val:new Date(Date.now()-86400000).toISOString().slice(0,10)},{label:"그제",val:new Date(Date.now()-172800000).toISOString().slice(0,10)}];
-
   const TABS=[{k:"checkin",l:"✏️ 체크인"},{k:"retake",l:"📋 재시명단"},{k:"dashboard",l:"📊 현황판"}];
 
-  return(
-    <div style={{minHeight:"100vh",background:"#0a0f1e",fontFamily:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif",color:"#e2e8f0",maxWidth:800,margin:"0 auto"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px}input,select,button{font-family:inherit}input::placeholder{color:#4a5568}.row{transition:all 0.15s;cursor:pointer}.row:hover{background:#1e3a5f !important;transform:translateX(3px)}.btn{cursor:pointer;transition:all 0.2s;border:none}.btn:hover{opacity:0.8}.pulse{animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}.pop{animation:pop 0.4s cubic-bezier(.34,1.56,.64,1)}@keyframes pop{from{transform:scale(0.6);opacity:0}to{transform:scale(1);opacity:1}}.fish{animation:swim 3s ease-in-out infinite;display:inline-block}@keyframes swim{0%,100%{transform:translateX(0)}50%{transform:translateX(5px) rotate(4deg)}}.inp{width:100%;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#e2e8f0;font-size:14px;outline:none;padding:11px 14px;transition:border 0.2s}.inp:focus{border-color:#38bdf8}.section{background:#0f172a;border-radius:14px;border:1px solid #1e3a5f;overflow:hidden;margin-bottom:14px}.shead{padding:10px 16px;background:#0d1929;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center}`}</style>
-      <div style={{background:"linear-gradient(135deg,#0f172a,#1e293b)",borderBottom:"1px solid #1e3a5f",padding:"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}><span className="fish" style={{fontSize:24}}>🐟</span><div><div style={{fontWeight:900,fontSize:16,color:"#7dd3fc"}}>은갈치영어학원</div><div style={{fontSize:10,color:"#475569"}}>재시 입퇴실 관리 시스템</div></div></div>
-        <div style={{textAlign:"right"}}><div style={{fontSize:12,fontWeight:700,color:"#94a3b8",fontVariantNumeric:"tabular-nums"}}>{fmt(now)}</div><div style={{fontSize:10,color:"#475569"}}>{fmtDateShort(now)}</div></div>
-      </div>
-      <div style={{display:"flex",background:"#0f172a",borderBottom:"1px solid #1e3a5f"}}>
-        {TABS.map(t=>{const a=view===t.k||(view==="success"&&t.k==="checkin");return<button key={t.k} className="btn" onClick={()=>{if((t.k==="retake"||t.k==="dashboard")&&!adminUnlocked){setView("adminLogin");}else setView(t.k);}} style={{flex:1,padding:"10px 0",fontSize:12,fontWeight:700,background:a?"#1e3a5f":"transparent",color:a?"#7dd3fc":"#64748b",borderBottom:a?"2px solid #38bdf8":"2px solid transparent"}}>{t.l}</button>;})}
-      </div>
+  const S = {
+    page:{minHeight:"100vh",background:C.bg,fontFamily:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif",color:C.text,maxWidth:800,margin:"0 auto"},
+    card:{background:C.bgCard,borderRadius:16,border:`1px solid ${C.border}`,overflow:"hidden",marginBottom:16,boxShadow:"0 2px 8px rgba(249,115,22,0.08)"},
+    cardHead:{padding:"13px 20px",background:C.bgSub,borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"},
+    inp:{width:"100%",background:C.bgCard,border:`2px solid ${C.border}`,borderRadius:12,color:C.text,fontSize:17,outline:"none",padding:"13px 16px",transition:"border 0.2s"},
+    row:{transition:"all 0.15s",cursor:"pointer"},
+    btn:{cursor:"pointer",transition:"all 0.2s",border:"none"},
+  };
 
-      {view==="checkin"&&(<div style={{padding:16,maxWidth:600,margin:"0 auto"}}>
-        <div style={{display:"flex",gap:6,marginBottom:12,background:"#0f172a",borderRadius:12,padding:5,border:"1px solid #1e3a5f"}}>
-          {[{k:"in",l:"🚪 입실 체크인",c:"#1d4ed8"},{k:"out",l:"🏃 퇴실 체크아웃",c:"#065f46"}].map(m=>(<button key={m.k} className="btn" onClick={()=>setMode(m.k)} style={{flex:1,padding:"9px 0",borderRadius:9,fontSize:12,fontWeight:700,background:mode===m.k?m.c:"transparent",color:mode===m.k?"#e2e8f0":"#64748b"}}>{m.l}</button>))}
+  return (
+    <div style={S.page}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:${C.border};border-radius:3px}
+        input,select,button{font-family:inherit}
+        input::placeholder{color:${C.textFaint}}
+        .row:hover{background:${C.primaryLt} !important;transform:translateX(4px)}
+        .btn:hover{opacity:0.85}
+        .pulse{animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        .pop{animation:pop 0.4s cubic-bezier(.34,1.56,.64,1)}@keyframes pop{from{transform:scale(0.6);opacity:0}to{transform:scale(1);opacity:1}}
+        .fish{animation:swim 3s ease-in-out infinite;display:inline-block}@keyframes swim{0%,100%{transform:translateX(0)}50%{transform:translateX(6px) rotate(5deg)}}
+        .inp:focus{border-color:${C.primary} !important;box-shadow:0 0 0 3px ${C.primaryLt}}
+        .slide{animation:slide 0.25s ease}@keyframes slide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+      `}</style>
+
+      {/* ── 헤더 ── */}
+      <div style={{background:`linear-gradient(135deg,#FFF0E0,#FFE4C8)`,borderBottom:`2px solid ${C.border}`,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 12px rgba(249,115,22,0.12)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <span className="fish" style={{fontSize:30}}>🐟</span>
+          <div>
+            <div style={{fontWeight:900,fontSize:20,color:C.primary}}>은갈치영어학원</div>
+            <div style={{fontSize:12,color:C.textSub}}>재시 입퇴실 관리 시스템</div>
+          </div>
         </div>
-        {!isConfigured&&<div style={{background:"#1c1400",border:"1px solid #78350f",borderRadius:10,padding:"8px 12px",marginBottom:12,fontSize:11,color:"#fbbf24"}}>⚠️ 알림톡 미설정 — 현황판 설정에서 솔라피 API 입력</div>}
-        {mode==="in"&&retakeIds.length>0&&(<div className="section" style={{marginBottom:12}}><div className="shead"><span style={{fontSize:11,fontWeight:700,color:"#fbbf24"}}>📋 오늘 재시 대상 ({retakeIds.length}명)</span></div><div style={{padding:"8px 12px",display:"flex",flexWrap:"wrap",gap:6}}>{retakeIds.map(id=>{const s=STUDENTS.find(x=>x.id===id);if(!s)return null;const insd=isInside(id),dnd=isDone(id);return<span key={id} className={insd||dnd?"":"row"} onClick={()=>!insd&&!dnd&&handleCheckin(s)} style={{fontSize:11,padding:"4px 10px",borderRadius:8,cursor:insd||dnd?"default":"pointer",background:dnd?"#052e16":insd?"#061a12":"#1c1a00",color:dnd?"#34d399":insd?"#6ee7b7":"#fbbf24",border:`1px solid ${dnd?"#065f46":insd?"#065f46":"#78350f"}`}}>{dnd?"✅":insd?"🟢":"⏳"} {s.name}</span>;})}</div></div>)}
-        <div style={{background:"#0f172a",borderRadius:12,padding:14,border:"1px solid #1e3a5f",marginBottom:12}}><div style={{position:"relative"}}><span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14}}>🔍</span><input autoFocus className="inp" value={search} onChange={e=>setSearch(e.target.value)} placeholder="이름/반 검색 (초성 가능, 예: ㄱㅈㅎ)" style={{paddingLeft:36}}/></div></div>
-        {search.length>0&&(<div className="section">{filteredStudents.length===0?<div style={{padding:32,textAlign:"center",color:"#475569"}}>검색 결과 없음</div>:filteredStudents.map((s,i)=>{const insd=isInside(s.id),dnd=isDone(s.id),isRt=retakeIds.includes(s.id),rec=getRecord(s.id);let action;if(mode==="in"){if(insd)action=<span style={{fontSize:11,color:"#34d399",fontWeight:700}}>🟢 {fmt(rec.inTime)}</span>;else if(dnd)action=<span style={{fontSize:11,color:"#64748b"}}>✅퇴실</span>;else action=<div style={{background:"#1d4ed8",color:"#bfdbfe",padding:"5px 12px",borderRadius:7,fontSize:11,fontWeight:700}}>입실</div>;}else{if(insd)action=<div style={{background:"#065f46",color:"#6ee7b7",padding:"5px 12px",borderRadius:7,fontSize:11,fontWeight:700}}>퇴실</div>;else if(dnd)action=<span style={{fontSize:11,color:"#64748b"}}>완료</span>;else action=<span style={{fontSize:11,color:"#475569"}}>미입실</span>;}const clickable=mode==="in"?!insd&&!dnd:insd;return(<div key={s.id} className={clickable?"row":""} onClick={()=>clickable&&handleSelect(s)} style={{padding:"11px 16px",borderBottom:i<filteredStudents.length-1?"1px solid #1e293b":"none",display:"flex",alignItems:"center",justifyContent:"space-between",background:dnd?"#0d1118":insd?"#061a12":"transparent",opacity:!clickable&&!insd?0.45:1}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:34,height:34,borderRadius:9,background:GRADE_CLR[s.grade]+"22",border:`1px solid ${GRADE_CLR[s.grade]}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:GRADE_CLR[s.grade]}}>{s.grade}</div><div><div style={{fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{s.name}{isRt&&<span style={{fontSize:9,background:"#78350f",color:"#fbbf24",borderRadius:5,padding:"1px 5px"}}>재시</span>}</div><div style={{fontSize:10,color:"#64748b"}}>{s.class} · {s.teacher}</div></div></div>{action}</div>);})}</div>)}
-        {search.length===0&&<div style={{textAlign:"center",padding:"36px 0",color:"#1e3a5f"}}><div style={{fontSize:40,marginBottom:8}}>🐟</div><div style={{fontSize:12,color:"#334155"}}>재시대상 {retakeIds.length}명 · 입실중 {records.filter(r=>!r.outTime).length}명 · 퇴실 {records.filter(r=>r.outTime).length}명</div></div>}
-      </div>)}
+        <div style={{textAlign:"right"}}>
+          <div style={{fontSize:15,fontWeight:700,color:C.textMd,fontVariantNumeric:"tabular-nums"}}>{fmt(now)}</div>
+          <div style={{fontSize:12,color:C.textSub}}>{fmtDateShort(now)}</div>
+        </div>
+      </div>
 
-      {view==="success"&&successInfo&&(<div style={{padding:16,maxWidth:420,margin:"40px auto"}}><div className="pop" style={{background:"#060e1a",border:`2px solid ${successInfo.type==="in"?"#34d399":successInfo.type==="out"?"#38bdf8":"#f59e0b"}`,borderRadius:22,padding:"28px 22px",textAlign:"center"}}><div style={{fontSize:48,marginBottom:8}}>{successInfo.type==="in"?"🚪":successInfo.type==="out"?"🏃":"⚠️"}</div><div style={{fontSize:22,fontWeight:900,marginBottom:2}}>{successInfo.student.name}</div><div style={{fontSize:11,color:"#64748b",marginBottom:16}}>{successInfo.student.class}</div>{successInfo.type==="in"&&<div style={{background:"#052e16",borderRadius:10,padding:12,marginBottom:12}}><div style={{color:"#34d399",fontWeight:800,fontSize:16}}>✅ 입실 완료!</div><div style={{color:"#065f46",fontSize:12,marginTop:2}}>{fmt(successInfo.time)}</div></div>}{successInfo.type==="out"&&<div style={{background:"#0c1a2e",borderRadius:10,padding:12,marginBottom:12}}><div style={{color:"#38bdf8",fontWeight:800,fontSize:16}}>🏃 퇴실 완료!</div><div style={{color:"#1d4ed8",fontSize:12,marginTop:2}}>{fmt(successInfo.outTime)}</div><div style={{color:"#7dd3fc",fontSize:11,marginTop:4}}>소요: {elapsed(successInfo.inTime,successInfo.outTime)}</div></div>}{(successInfo.type==="already_in")&&<div style={{background:"#451a03",borderRadius:10,padding:12,marginBottom:12}}><div style={{color:"#fbbf24",fontWeight:700}}>이미 입실 중</div></div>}{(successInfo.type==="already_out")&&<div style={{background:"#0f172a",borderRadius:10,padding:12,marginBottom:12}}><div style={{color:"#64748b",fontWeight:700}}>이미 퇴실 완료</div></div>}{(successInfo.type==="not_in")&&<div style={{background:"#451a03",borderRadius:10,padding:12,marginBottom:12}}><div style={{color:"#fbbf24",fontWeight:700}}>입실 기록 없음</div></div>}{(successInfo.type==="in"||successInfo.type==="out")&&<div style={{background:"#0f172a",borderRadius:9,padding:"8px 12px",marginBottom:12,textAlign:"left",fontSize:11}}><span style={{color:"#64748b"}}>📱 알림톡 </span><span style={{color:successInfo.notifStatus==="sent"?"#34d399":successInfo.notifStatus==="failed"?"#f87171":"#7dd3fc"}}>{successInfo.notifStatus==="sent"?"✅발송완료":successInfo.notifStatus==="failed"?"❌실패":successInfo.notifStatus==="no_parent"?"—번호없음":"🔵시뮬레이션"}</span></div>}<button className="btn" onClick={()=>setView("checkin")} style={{width:"100%",padding:12,background:"#1d4ed8",color:"#bfdbfe",borderRadius:10,fontSize:14,fontWeight:700}}>확인</button></div></div>)}
+      {/* ── 탭 ── */}
+      <div style={{display:"flex",background:C.bgCard,borderBottom:`2px solid ${C.border}`}}>
+        {TABS.map(t=>{
+          const a=view===t.k||(view==="success"&&t.k==="checkin");
+          return <button key={t.k} className="btn" onClick={()=>{if((t.k==="retake"||t.k==="dashboard")&&!adminUnlocked){setView("adminLogin");}else setView(t.k);}}
+            style={{flex:1,padding:"14px 0",fontSize:15,fontWeight:700,background:a?C.primaryLt:"transparent",color:a?C.primary:C.textSub,borderBottom:a?`3px solid ${C.primary}`:"3px solid transparent"}}>
+            {t.l}
+          </button>;
+        })}
+      </div>
 
-      {view==="adminLogin"&&(<div style={{padding:16,maxWidth:340,margin:"60px auto"}}><div style={{background:"#0f172a",borderRadius:18,padding:28,border:"1px solid #1e3a5f",textAlign:"center"}}><div style={{fontSize:34,marginBottom:10}}>🔒</div><div style={{fontWeight:800,fontSize:16,marginBottom:18}}>관리자 인증</div><input type="password" className="inp" value={adminPass} onChange={e=>setAdminPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAdminLogin()} placeholder="비밀번호" style={{textAlign:"center",letterSpacing:6,marginBottom:8,border:`1px solid ${adminError?"#ef4444":"#334155"}`}}/>{adminError&&<div style={{color:"#ef4444",fontSize:11,marginBottom:8}}>비밀번호 오류</div>}<button className="btn" onClick={handleAdminLogin} style={{width:"100%",padding:12,background:"#1d4ed8",color:"#bfdbfe",borderRadius:10,fontSize:14,fontWeight:700}}>로그인</button><button className="btn" onClick={()=>setView("checkin")} style={{marginTop:8,background:"none",color:"#475569",fontSize:12}}>취소</button></div></div>)}
+      {/* ── 체크인 ── */}
+      {view==="checkin"&&(
+        <div style={{padding:18,maxWidth:600,margin:"0 auto"}}>
+          {/* 모드 토글 */}
+          <div style={{display:"flex",gap:8,marginBottom:16,background:C.bgCard,borderRadius:14,padding:6,border:`1px solid ${C.border}`,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+            {[{k:"in",l:"🚪 입실 체크인",bg:C.primary},{k:"out",l:"🏃 퇴실 체크아웃",bg:C.green}].map(m=>(
+              <button key={m.k} className="btn" onClick={()=>setMode(m.k)}
+                style={{flex:1,padding:"12px 0",borderRadius:10,fontSize:15,fontWeight:700,background:mode===m.k?m.bg:"transparent",color:mode===m.k?"#fff":C.textSub,boxShadow:mode===m.k?"0 2px 8px rgba(0,0,0,0.15)":"none"}}>
+                {m.l}
+              </button>
+            ))}
+          </div>
 
-      {view==="retake"&&(<div style={{padding:16,maxWidth:600,margin:"0 auto"}}>
-        <div style={{display:"flex",gap:6,marginBottom:12,alignItems:"center",flexWrap:"wrap"}}>{dateShortcuts.map(d=>(<button key={d.val} className="btn" onClick={()=>setSelDate(d.val)} style={{padding:"6px 14px",borderRadius:8,fontSize:12,fontWeight:700,background:selDate===d.val?"#1d4ed8":"#1e293b",color:selDate===d.val?"#bfdbfe":"#64748b",border:"1px solid #334155"}}>{d.label}</button>))}<input type="date" className="inp" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{flex:1,minWidth:130,padding:"6px 10px",fontSize:12}}/></div>
-        <div className="section"><div className="shead"><span style={{fontSize:12,fontWeight:700,color:"#fbbf24"}}>📋 {selDate} 재시 대상자</span><span style={{fontSize:11,color:"#64748b"}}>{retakeIds.length}명</span></div><div style={{padding:12}}>
-          <div style={{position:"relative",marginBottom:10}}><span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:13}}>➕</span><input className="inp" value={retakeSearch} onChange={e=>setRetakeSearch(e.target.value)} placeholder="학생 검색 후 추가 (초성 가능)" style={{paddingLeft:32,fontSize:13}}/></div>
-          {retakeSearch.length>0&&(<div style={{background:"#0a0f1e",borderRadius:9,border:"1px solid #1e293b",marginBottom:10,maxHeight:180,overflowY:"auto"}}>{retakeFiltered.length===0?<div style={{padding:16,textAlign:"center",color:"#475569",fontSize:12}}>검색 결과 없음</div>:retakeFiltered.slice(0,8).map((s,i)=>(<div key={s.id} className="row" onClick={()=>addToRetake(s)} style={{padding:"9px 12px",borderBottom:i<Math.min(retakeFiltered.length,8)-1?"1px solid #1e293b":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><span style={{fontWeight:700,fontSize:13}}>{s.name}</span><span style={{color:"#64748b",fontSize:11,marginLeft:6}}>{s.class}</span></div><span style={{fontSize:11,background:"#1d4ed8",color:"#bfdbfe",borderRadius:6,padding:"2px 8px"}}>추가</span></div>))}</div>)}
-          {retakeIds.length===0?<div style={{padding:24,textAlign:"center",color:"#334155",fontSize:12}}>등록된 학생 없음<br/>위에서 검색해 추가하세요</div>:retakeIds.map(id=>{const s=STUDENTS.find(x=>x.id===id);if(!s)return null;const insd=isInside(id),dnd=isDone(id);return(<div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 4px",borderBottom:"1px solid #1e293b"}}><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>{dnd?"✅":insd?"🟢":"⏳"}</span><div><span style={{fontWeight:700,fontSize:13,color:dnd?"#34d399":insd?"#6ee7b7":"#fbbf24"}}>{s.name}</span><span style={{color:"#64748b",fontSize:10,marginLeft:6}}>{s.class}</span></div></div><button className="btn" onClick={()=>removeFromRetake(id)} style={{background:"#450a0a",color:"#f87171",border:"none",borderRadius:6,padding:"3px 10px",fontSize:11}}>삭제</button></div>);})}
-        </div></div>
-      </div>)}
+          {!isConfigured&&<div style={{background:"#FFFBEB",border:`1px solid ${C.amber}`,borderRadius:12,padding:"10px 14px",marginBottom:14,fontSize:13,color:"#92400E",fontWeight:500}}>⚠️ 알림톡 미설정 — 현황판 설정에서 솔라피 API를 입력해주세요</div>}
 
-      {view==="dashboard"&&(<div style={{padding:16,maxWidth:700,margin:"0 auto"}}>
-        <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>{dateShortcuts.map(d=>(<button key={d.val} className="btn" onClick={()=>setSelDate(d.val)} style={{padding:"6px 14px",borderRadius:8,fontSize:12,fontWeight:700,background:selDate===d.val?"#1d4ed8":"#1e293b",color:selDate===d.val?"#bfdbfe":"#64748b",border:"1px solid #334155"}}>{d.label}</button>))}<input type="date" className="inp" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{flex:1,minWidth:130,padding:"6px 10px",fontSize:12}}/><button className="btn" onClick={()=>exportCSV(selDate,records,retakeIds)} style={{padding:"6px 14px",borderRadius:8,fontSize:12,fontWeight:700,background:"#065f46",color:"#6ee7b7",border:"1px solid #065f46"}}>⬇️ CSV</button></div>
-        <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{TEACHERS.map(t=>(<button key={t} className="btn" onClick={()=>setTeacherFilter(t)} style={{padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,background:teacherFilter===t?"#7c3aed":"#1e293b",color:teacherFilter===t?"#ede9fe":"#64748b",border:"1px solid #334155"}}>{t}</button>))}</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>{[{l:"⏳ 미응시",v:pending.length,c:"#fbbf24"},{l:"🟢 입실중",v:inside.length,c:"#34d399"},{l:"✅ 퇴실완료",v:done.length,c:"#38bdf8"}].map(s=>(<div key={s.l} style={{background:"#0f172a",borderRadius:12,padding:"14px 10px",border:"1px solid #1e3a5f",textAlign:"center"}}><div style={{fontSize:24,fontWeight:900,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:"#64748b",marginTop:2}}>{s.l}</div></div>))}</div>
-        {selDate===todayStr()&&<div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}><div className="pulse" style={{width:7,height:7,borderRadius:"50%",background:"#34d399"}}/><span style={{fontSize:11,color:"#64748b"}}>실시간 · {fmtDateShort(now)}</span></div>}
-        {pending.length>0&&(<div className="section"><div className="shead"><span style={{fontSize:11,fontWeight:700,color:"#fbbf24"}}>⏳ 응시예정 (미입실)</span><span style={{fontSize:11,color:"#fbbf24"}}>{pending.length}명</span></div>{pending.map((x,i)=>(<div key={x.student.id} style={{padding:"10px 16px",borderBottom:i<pending.length-1?"1px solid #1e293b":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:6,height:6,borderRadius:"50%",background:"#fbbf24"}}/><span style={{fontWeight:700,fontSize:13}}>{x.student.name}</span><span style={{color:"#64748b",fontSize:11}}>{x.student.class}</span></div><span style={{fontSize:10,color:"#78350f"}}>{x.student.teacher}</span></div>))}</div>)}
-        {inside.length>0&&(<div className="section"><div className="shead"><span style={{fontSize:11,fontWeight:700,color:"#34d399"}}>🟢 현재 입실 중</span><span style={{fontSize:11,color:"#34d399"}}>{inside.length}명</span></div>{inside.map((x,i)=>(<div key={x.student.id} style={{padding:"10px 16px",borderBottom:i<inside.length-1?"1px solid #1e293b":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:6,height:6,borderRadius:"50%",background:"#34d399"}}/><div><span style={{fontWeight:700,fontSize:13}}>{x.student.name}</span><span style={{color:"#64748b",fontSize:11,marginLeft:6}}>{x.student.class}</span></div></div><div style={{textAlign:"right"}}><div style={{fontSize:12,color:"#34d399"}}>입실 {fmt(x.rec.inTime)}</div><div style={{fontSize:10,color:"#334155"}}>경과 {elapsed(x.rec.inTime,now)}</div></div></div>))}</div>)}
-        {done.length>0&&(<div className="section"><div className="shead"><span style={{fontSize:11,fontWeight:700,color:"#38bdf8"}}>✅ 퇴실 완료</span><span style={{fontSize:11,color:"#64748b"}}>{done.length}명</span></div>{done.map((x,i)=>(<div key={x.student.id} style={{padding:"10px 16px",borderBottom:i<done.length-1?"1px solid #1e293b":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:6,height:6,borderRadius:"50%",background:"#38bdf8"}}/><div><span style={{fontWeight:700,fontSize:13}}>{x.student.name}</span><span style={{color:"#64748b",fontSize:11,marginLeft:6}}>{x.student.class}</span></div></div><div style={{textAlign:"right"}}><div style={{fontSize:11,color:"#38bdf8"}}>{fmt(x.rec.inTime)} → {fmt(x.rec.outTime)}</div><div style={{fontSize:10,color:"#334155"}}>{elapsed(x.rec.inTime,x.rec.outTime)}</div></div></div>))}</div>)}
-        {unified.length===0&&<div style={{padding:48,textAlign:"center",color:"#334155"}}><div style={{fontSize:36,marginBottom:10}}>📋</div>해당 날짜에 기록이 없습니다</div>}
-        <div className="section" style={{marginTop:8}}><div className="shead"><span style={{fontSize:12,fontWeight:700,color:"#7dd3fc"}}>⚙️ 솔라피 알림톡 설정</span></div><div style={{padding:14}}>{[{l:"API Key",k:"apiKey",t:"text",p:"NCSNXXXXXXXXXXXXXX"},{l:"API Secret",k:"apiSecret",t:"password",p:"••••••••"},{l:"발신번호",k:"from",t:"text",p:"010-0000-0000"},{l:"관리자 비밀번호",k:"adminPass",t:"password",p:"기본: 1234"}].map(f=>(<div key={f.k} style={{marginBottom:10}}><div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:4}}>{f.l}</div><input type={f.t} className="inp" placeholder={f.p} value={tmpSettings[f.k]||""} onChange={e=>setTmpSettings(p=>({...p,[f.k]:e.target.value}))} style={{fontSize:13,padding:"9px 12px"}}/></div>))}<button className="btn" onClick={saveSettings} style={{width:"100%",padding:11,background:savedMsg?"#065f46":"#1d4ed8",color:savedMsg?"#6ee7b7":"#bfdbfe",borderRadius:10,fontSize:13,fontWeight:700}}>{savedMsg?"✅ 저장됨!":"저장"}</button></div></div>
-      </div>)}
+          {/* 재시 대상 빠른 표시 */}
+          {mode==="in"&&retakeIds.length>0&&(
+            <div style={{...S.card,marginBottom:14}}>
+              <div style={S.cardHead}><span style={{fontSize:14,fontWeight:700,color:C.amber}}>📋 오늘 재시 대상 ({retakeIds.length}명)</span></div>
+              <div style={{padding:"10px 14px",display:"flex",flexWrap:"wrap",gap:8}}>
+                {retakeIds.map(id=>{
+                  const s=STUDENTS.find(x=>x.id===id); if(!s)return null;
+                  const insd=isInside(id),dnd=isDone(id);
+                  return <span key={id} className={insd||dnd?"":"row"} onClick={()=>!insd&&!dnd&&handleCheckin(s)}
+                    style={{fontSize:14,padding:"6px 14px",borderRadius:20,cursor:insd||dnd?"default":"pointer",fontWeight:600,
+                      background:dnd?C.greenLt:insd?"#F0FFF4":C.amberLt,
+                      color:dnd?C.green:insd?"#15803D":C.amber,
+                      border:`1px solid ${dnd?"#86EFAC":insd?"#4ADE80":"#FCD34D"}`}}>
+                    {dnd?"✅":insd?"🟢":"⏳"} {s.name}
+                  </span>;
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 검색 */}
+          <div style={{background:C.bgCard,borderRadius:14,padding:16,border:`1px solid ${C.border}`,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+            <div style={{position:"relative"}}>
+              <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:18}}>🔍</span>
+              <input autoFocus className="inp" value={search} onChange={e=>setSearch(e.target.value)}
+                placeholder="이름/반 검색 (초성 가능 — ㄱㅈㅎ)"
+                style={{paddingLeft:44,fontSize:17,border:`2px solid ${C.border}`,borderRadius:12}} />
+            </div>
+          </div>
+
+          {search.length>0&&(
+            <div style={S.card}>
+              {filteredStudents.length===0
+                ? <div style={{padding:40,textAlign:"center",color:C.textFaint,fontSize:16}}>😅 검색 결과가 없어요</div>
+                : filteredStudents.map((s,i)=>{
+                    const insd=isInside(s.id),dnd=isDone(s.id),isRt=retakeIds.includes(s.id),rec=getRecord(s.id);
+                    let action;
+                    if(mode==="in"){
+                      if(insd) action=<span style={{fontSize:13,color:C.green,fontWeight:700}}>🟢 입실중 {fmt(rec.inTime)}</span>;
+                      else if(dnd) action=<span style={{fontSize:13,color:C.textFaint}}>✅ 퇴실완료</span>;
+                      else action=<div style={{background:C.primary,color:"#fff",padding:"8px 18px",borderRadius:20,fontSize:14,fontWeight:700,boxShadow:"0 2px 6px rgba(249,115,22,0.4)"}}>입실</div>;
+                    } else {
+                      if(insd) action=<div style={{background:C.green,color:"#fff",padding:"8px 18px",borderRadius:20,fontSize:14,fontWeight:700,boxShadow:"0 2px 6px rgba(22,163,74,0.4)"}}>퇴실</div>;
+                      else if(dnd) action=<span style={{fontSize:13,color:C.textFaint}}>이미 퇴실</span>;
+                      else action=<span style={{fontSize:13,color:C.textFaint}}>미입실</span>;
+                    }
+                    const clickable=mode==="in"?!insd&&!dnd:insd;
+                    return (
+                      <div key={s.id} className={clickable?"row btn":""} onClick={()=>clickable&&handleSelect(s)}
+                        style={{padding:"14px 18px",borderBottom:i<filteredStudents.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",alignItems:"center",justifyContent:"space-between",background:dnd?"#F9FAFB":insd?C.greenLt:C.bgCard,opacity:!clickable&&!insd?0.5:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:12}}>
+                          <div style={{width:42,height:42,borderRadius:12,background:GRADE_CLR[s.grade]+"18",border:`2px solid ${GRADE_CLR[s.grade]}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,color:GRADE_CLR[s.grade]}}>{s.grade}</div>
+                          <div>
+                            <div style={{fontWeight:700,fontSize:17,display:"flex",alignItems:"center",gap:6,color:C.text}}>
+                              {s.name}
+                              {isRt&&<span style={{fontSize:11,background:C.amberLt,color:C.amber,borderRadius:6,padding:"1px 7px",border:`1px solid #FCD34D`}}>재시</span>}
+                            </div>
+                            <div style={{fontSize:13,color:C.textSub,marginTop:1}}>{s.class} · {s.teacher}</div>
+                          </div>
+                        </div>
+                        {action}
+                      </div>
+                    );
+                  })}
+            </div>
+          )}
+
+          {search.length===0&&(
+            <div style={{textAlign:"center",padding:"48px 0",color:C.textFaint}}>
+              <div style={{fontSize:52,marginBottom:10}}>🐟</div>
+              <div style={{fontSize:15,color:C.textSub}}>재시대상 {retakeIds.length}명 · 입실중 {records.filter(r=>!r.outTime).length}명 · 퇴실완료 {records.filter(r=>r.outTime).length}명</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 성공 화면 ── */}
+      {view==="success"&&successInfo&&(
+        <div style={{padding:20,maxWidth:440,margin:"48px auto"}}>
+          <div className="pop" style={{background:C.bgCard,border:`2px solid ${successInfo.type==="in"?C.green:successInfo.type==="out"?C.primary:C.amber}`,borderRadius:24,padding:"36px 28px",textAlign:"center",boxShadow:"0 8px 32px rgba(249,115,22,0.15)"}}>
+            <div style={{fontSize:60,marginBottom:12}}>{successInfo.type==="in"?"🚪":successInfo.type==="out"?"🏃":"⚠️"}</div>
+            <div style={{fontSize:26,fontWeight:900,color:C.text,marginBottom:4}}>{successInfo.student.name}</div>
+            <div style={{fontSize:14,color:C.textSub,marginBottom:20}}>{successInfo.student.class}</div>
+
+            {successInfo.type==="in"&&<div style={{background:C.greenLt,border:`1px solid #86EFAC`,borderRadius:14,padding:"14px 16px",marginBottom:14}}><div style={{color:C.green,fontWeight:800,fontSize:18}}>✅ 입실 완료!</div><div style={{color:"#15803D",fontSize:14,marginTop:4}}>{fmt(successInfo.time)}</div></div>}
+            {successInfo.type==="out"&&<div style={{background:C.primaryLt,border:`1px solid ${C.border}`,borderRadius:14,padding:"14px 16px",marginBottom:14}}><div style={{color:C.primary,fontWeight:800,fontSize:18}}>🏃 퇴실 완료!</div><div style={{color:C.primaryDk,fontSize:14,marginTop:4}}>{fmt(successInfo.outTime)}</div><div style={{color:C.textMd,fontSize:13,marginTop:4}}>소요시간: {elapsed(successInfo.inTime,successInfo.outTime)}</div></div>}
+            {successInfo.type==="already_in"&&<div style={{background:C.amberLt,border:`1px solid #FCD34D`,borderRadius:14,padding:"14px 16px",marginBottom:14}}><div style={{color:C.amber,fontWeight:700,fontSize:16}}>이미 입실 중입니다</div><div style={{color:"#92400E",fontSize:13,marginTop:4}}>입실시각: {fmt(successInfo.time)}</div></div>}
+            {successInfo.type==="already_out"&&<div style={{background:"#F9FAFB",border:`1px solid ${C.border}`,borderRadius:14,padding:"14px 16px",marginBottom:14}}><div style={{color:C.textSub,fontWeight:700,fontSize:16}}>이미 퇴실 완료</div><div style={{color:C.textFaint,fontSize:13,marginTop:4}}>{fmt(successInfo.inTime)} → {fmt(successInfo.outTime)}</div></div>}
+            {successInfo.type==="not_in"&&<div style={{background:C.amberLt,border:`1px solid #FCD34D`,borderRadius:14,padding:"14px 16px",marginBottom:14}}><div style={{color:C.amber,fontWeight:700,fontSize:16}}>입실 기록이 없어요</div><div style={{color:"#92400E",fontSize:13,marginTop:4}}>먼저 입실 체크인이 필요합니다</div></div>}
+
+            {(successInfo.type==="in"||successInfo.type==="out")&&(
+              <div style={{background:C.bgSub,border:`1px solid ${C.borderSub}`,borderRadius:12,padding:"10px 14px",marginBottom:16,textAlign:"left"}}>
+                <span style={{fontSize:13,color:C.textSub}}>📱 알림톡 </span>
+                <span style={{fontSize:13,fontWeight:700,color:successInfo.notifStatus==="sent"?C.green:successInfo.notifStatus==="failed"?C.red:C.amber}}>
+                  {successInfo.notifStatus==="sent"?"✅ 발송완료":successInfo.notifStatus==="failed"?"❌ 실패":successInfo.notifStatus==="no_parent"?"— 번호없음":"🔵 시뮬레이션"}
+                </span>
+              </div>
+            )}
+
+            <button className="btn" onClick={()=>setView("checkin")}
+              style={{width:"100%",padding:15,background:C.primary,color:"#fff",borderRadius:14,fontSize:16,fontWeight:700,boxShadow:"0 4px 12px rgba(249,115,22,0.4)"}}>
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 관리자 로그인 ── */}
+      {view==="adminLogin"&&(
+        <div style={{padding:20,maxWidth:360,margin:"72px auto"}}>
+          <div style={{background:C.bgCard,borderRadius:22,padding:36,border:`1px solid ${C.border}`,textAlign:"center",boxShadow:"0 4px 20px rgba(249,115,22,0.1)"}}>
+            <div style={{fontSize:44,marginBottom:14}}>🔒</div>
+            <div style={{fontWeight:900,fontSize:20,color:C.text,marginBottom:22}}>관리자 인증</div>
+            <input type="password" value={adminPass} onChange={e=>setAdminPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAdminLogin()}
+              placeholder="비밀번호"
+              style={{width:"100%",background:C.bgSub,border:`2px solid ${adminError?C.red:C.border}`,borderRadius:12,color:C.text,fontSize:18,outline:"none",padding:"13px 16px",textAlign:"center",letterSpacing:8,marginBottom:10}}/>
+            {adminError&&<div style={{color:C.red,fontSize:14,marginBottom:10,fontWeight:600}}>비밀번호가 틀렸습니다</div>}
+            <button className="btn" onClick={handleAdminLogin}
+              style={{width:"100%",padding:14,background:C.primary,color:"#fff",borderRadius:12,fontSize:16,fontWeight:700,boxShadow:"0 4px 12px rgba(249,115,22,0.35)",marginBottom:10}}>
+              로그인
+            </button>
+            <button className="btn" onClick={()=>setView("checkin")} style={{background:"none",color:C.textSub,fontSize:14}}>취소</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 재시 명단 ── */}
+      {view==="retake"&&(
+        <div style={{padding:18,maxWidth:600,margin:"0 auto"}}>
+          <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+            {dateShortcuts.map(d=>(
+              <button key={d.val} className="btn" onClick={()=>setSelDate(d.val)}
+                style={{padding:"9px 18px",borderRadius:20,fontSize:14,fontWeight:700,background:selDate===d.val?C.primary:C.bgCard,color:selDate===d.val?"#fff":C.textMd,border:`1px solid ${selDate===d.val?C.primary:C.border}`,boxShadow:selDate===d.val?"0 2px 8px rgba(249,115,22,0.3)":"none"}}>
+                {d.label}
+              </button>
+            ))}
+            <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}
+              style={{flex:1,minWidth:140,background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,color:C.text,fontSize:14,outline:"none",padding:"9px 12px"}}/>
+          </div>
+
+          <div style={S.card}>
+            <div style={S.cardHead}>
+              <span style={{fontSize:15,fontWeight:700,color:C.amber}}>📋 {selDate} 재시 대상자</span>
+              <span style={{fontSize:14,color:C.textSub,fontWeight:600}}>{retakeIds.length}명 등록</span>
+            </div>
+            <div style={{padding:16}}>
+              <div style={{position:"relative",marginBottom:12}}>
+                <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16}}>➕</span>
+                <input value={retakeSearch} onChange={e=>setRetakeSearch(e.target.value)}
+                  placeholder="학생 이름 검색 후 추가 (초성 가능)"
+                  style={{width:"100%",background:C.bgSub,border:`2px solid ${C.border}`,borderRadius:12,color:C.text,fontSize:16,outline:"none",padding:"12px 14px 12px 42px"}}/>
+              </div>
+
+              {retakeSearch.length>0&&(
+                <div style={{background:C.bgSub,borderRadius:12,border:`1px solid ${C.border}`,marginBottom:12,maxHeight:200,overflowY:"auto"}}>
+                  {retakeFiltered.length===0
+                    ? <div style={{padding:20,textAlign:"center",color:C.textFaint,fontSize:14}}>검색 결과 없음</div>
+                    : retakeFiltered.slice(0,8).map((s,i)=>(
+                      <div key={s.id} className="row btn" onClick={()=>addToRetake(s)}
+                        style={{padding:"12px 16px",borderBottom:i<Math.min(retakeFiltered.length,8)-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div>
+                          <span style={{fontWeight:700,fontSize:16,color:C.text}}>{s.name}</span>
+                          <span style={{color:C.textSub,fontSize:13,marginLeft:8}}>{s.class}</span>
+                        </div>
+                        <span style={{fontSize:13,background:C.primary,color:"#fff",borderRadius:8,padding:"4px 12px",fontWeight:700}}>추가</span>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {retakeIds.length===0
+                ? <div style={{padding:32,textAlign:"center",color:C.textFaint,fontSize:15}}>등록된 학생이 없습니다<br/><span style={{fontSize:13}}>위에서 검색해 추가하세요</span></div>
+                : retakeIds.map(id=>{
+                    const s=STUDENTS.find(x=>x.id===id); if(!s)return null;
+                    const insd=isInside(id),dnd=isDone(id);
+                    return (
+                      <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 4px",borderBottom:`1px solid ${C.borderSub}`}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{fontSize:18}}>{dnd?"✅":insd?"🟢":"⏳"}</span>
+                          <div>
+                            <span style={{fontWeight:700,fontSize:16,color:dnd?C.green:insd?"#15803D":C.amber}}>{s.name}</span>
+                            <span style={{color:C.textSub,fontSize:13,marginLeft:8}}>{s.class}</span>
+                          </div>
+                        </div>
+                        <button className="btn" onClick={()=>removeFromRetake(id)}
+                          style={{background:C.redLt,color:C.red,border:`1px solid #FECACA`,borderRadius:8,padding:"5px 14px",fontSize:13,fontWeight:700}}>
+                          삭제
+                        </button>
+                      </div>
+                    );
+                  })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 현황판 ── */}
+      {view==="dashboard"&&(
+        <div style={{padding:18,maxWidth:700,margin:"0 auto"}}>
+          {/* 날짜 */}
+          <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+            {dateShortcuts.map(d=>(
+              <button key={d.val} className="btn" onClick={()=>setSelDate(d.val)}
+                style={{padding:"9px 18px",borderRadius:20,fontSize:14,fontWeight:700,background:selDate===d.val?C.primary:C.bgCard,color:selDate===d.val?"#fff":C.textMd,border:`1px solid ${selDate===d.val?C.primary:C.border}`,boxShadow:selDate===d.val?"0 2px 8px rgba(249,115,22,0.3)":"none"}}>
+                {d.label}
+              </button>
+            ))}
+            <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}
+              style={{flex:1,minWidth:140,background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,color:C.text,fontSize:14,outline:"none",padding:"9px 12px"}}/>
+            <button className="btn" onClick={()=>exportCSV(selDate,records,retakeIds)}
+              style={{padding:"9px 18px",borderRadius:20,fontSize:14,fontWeight:700,background:C.green,color:"#fff",border:"none",boxShadow:"0 2px 8px rgba(22,163,74,0.35)"}}>
+              ⬇️ CSV
+            </button>
+          </div>
+
+          {/* 강사 필터 */}
+          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+            {TEACHERS.map(t=>(
+              <button key={t} className="btn" onClick={()=>setTeacherFilter(t)}
+                style={{padding:"7px 16px",borderRadius:20,fontSize:14,fontWeight:700,background:teacherFilter===t?"#7C3AED":C.bgCard,color:teacherFilter===t?"#fff":C.textMd,border:`1px solid ${teacherFilter===t?"#7C3AED":C.border}`,boxShadow:teacherFilter===t?"0 2px 8px rgba(124,58,237,0.3)":"none"}}>
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {/* 통계 */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+            {[{l:"⏳ 미응시",v:pending.length,c:C.amber,bg:C.amberLt,bd:"#FCD34D"},{l:"🟢 입실중",v:inside.length,c:C.green,bg:C.greenLt,bd:"#86EFAC"},{l:"✅ 퇴실완료",v:done.length,c:C.primary,bg:C.primaryLt,bd:C.border}].map(s=>(
+              <div key={s.l} style={{background:s.bg,borderRadius:14,padding:"16px 12px",border:`1px solid ${s.bd}`,textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
+                <div style={{fontSize:32,fontWeight:900,color:s.c}}>{s.v}</div>
+                <div style={{fontSize:13,color:C.textMd,marginTop:3,fontWeight:600}}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+
+          {selDate===todayStr()&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><div className="pulse" style={{width:8,height:8,borderRadius:"50%",background:C.green}}/><span style={{fontSize:13,color:C.textSub,fontWeight:600}}>실시간 · {fmtDateShort(now)}</span></div>}
+
+          {/* 미응시 */}
+          {pending.length>0&&(
+            <div style={S.card}>
+              <div style={{...S.cardHead,background:C.amberLt,borderBottom:`1px solid #FCD34D`}}>
+                <span style={{fontSize:14,fontWeight:700,color:C.amber}}>⏳ 응시예정 (미입실)</span>
+                <span style={{fontSize:14,color:C.amber,fontWeight:700}}>{pending.length}명</span>
+              </div>
+              {pending.map((x,i)=>(
+                <div key={x.student.id} style={{padding:"13px 18px",borderBottom:i<pending.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:C.amber}}/>
+                    <span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span>
+                    <span style={{color:C.textSub,fontSize:13}}>{x.student.class}</span>
+                  </div>
+                  <span style={{fontSize:13,color:C.textMd,fontWeight:600}}>{x.student.teacher}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 입실중 */}
+          {inside.length>0&&(
+            <div style={S.card}>
+              <div style={{...S.cardHead,background:C.greenLt,borderBottom:"1px solid #86EFAC"}}>
+                <span style={{fontSize:14,fontWeight:700,color:C.green}}>🟢 현재 입실 중</span>
+                <span style={{fontSize:14,color:C.green,fontWeight:700}}>{inside.length}명</span>
+              </div>
+              {inside.map((x,i)=>(
+                <div key={x.student.id} className="slide" style={{padding:"13px 18px",borderBottom:i<inside.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:C.green}}/>
+                    <div>
+                      <span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span>
+                      <span style={{color:C.textSub,fontSize:13,marginLeft:8}}>{x.student.class}</span>
+                    </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:14,color:C.green,fontWeight:600}}>입실 {fmt(x.rec.inTime)}</div>
+                    <div style={{fontSize:12,color:C.textFaint}}>경과 {elapsed(x.rec.inTime,now)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 퇴실완료 */}
+          {done.length>0&&(
+            <div style={S.card}>
+              <div style={{...S.cardHead,background:C.primaryLt,borderBottom:`1px solid ${C.border}`}}>
+                <span style={{fontSize:14,fontWeight:700,color:C.primary}}>✅ 퇴실 완료</span>
+                <span style={{fontSize:14,color:C.textSub,fontWeight:600}}>{done.length}명</span>
+              </div>
+              {done.map((x,i)=>(
+                <div key={x.student.id} style={{padding:"13px 18px",borderBottom:i<done.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:C.primary}}/>
+                    <div>
+                      <span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span>
+                      <span style={{color:C.textSub,fontSize:13,marginLeft:8}}>{x.student.class}</span>
+                    </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:13,color:C.textMd}}>{fmt(x.rec.inTime)} → {fmt(x.rec.outTime)}</div>
+                    <div style={{fontSize:12,color:C.textFaint}}>{elapsed(x.rec.inTime,x.rec.outTime)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {unified.length===0&&<div style={{padding:56,textAlign:"center",color:C.textFaint}}><div style={{fontSize:44,marginBottom:12}}>📋</div><div style={{fontSize:16}}>해당 날짜에 기록이 없습니다</div></div>}
+
+          {/* 설정 */}
+          <div style={S.card}>
+            <div style={S.cardHead}><span style={{fontSize:15,fontWeight:700,color:C.primary}}>⚙️ 솔라피 알림톡 설정</span></div>
+            <div style={{padding:18}}>
+              {[{l:"API Key",k:"apiKey",t:"text",p:"NCSNXXXXXXXXXXXXXX"},{l:"API Secret",k:"apiSecret",t:"password",p:"••••••••••••"},{l:"발신번호",k:"from",t:"text",p:"010-0000-0000"},{l:"관리자 비밀번호",k:"adminPass",t:"password",p:"기본: 1234"}].map(f=>(
+                <div key={f.k} style={{marginBottom:14}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.textMd,marginBottom:6}}>{f.l}</div>
+                  <input type={f.t} placeholder={f.p} value={tmpSettings[f.k]||""} onChange={e=>setTmpSettings(p=>({...p,[f.k]:e.target.value}))}
+                    style={{width:"100%",background:C.bgSub,border:`2px solid ${C.border}`,borderRadius:12,color:C.text,fontSize:15,outline:"none",padding:"12px 14px"}}/>
+                </div>
+              ))}
+              <button className="btn" onClick={saveSettings}
+                style={{width:"100%",padding:14,background:savedMsg?C.green:C.primary,color:"#fff",borderRadius:12,fontSize:16,fontWeight:700,boxShadow:`0 4px 12px rgba(249,115,22,0.35)`,marginTop:4}}>
+                {savedMsg?"✅ 저장됐습니다!":"저장"}
+              </button>
+              <div style={{marginTop:14,fontSize:13,color:C.textFaint,lineHeight:1.8}}>
+                ① solapi.com 가입 → ② 잔액충전 → ③ 발신번호등록 → ④ API키발급 → ⑤ 위에 입력<br/>
+                SMS 건당 약 9~11원
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
