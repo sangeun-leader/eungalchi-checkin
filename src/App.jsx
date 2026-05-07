@@ -102,6 +102,9 @@ export default function App(){
   const [settings,setSettings]=useState({apiKey:"",apiSecret:"",from:"",adminPass:"1234"});
   const [tmpSettings,setTmpSettings]=useState({apiKey:"",apiSecret:"",from:"",adminPass:"1234"});
   const [savedMsg,setSavedMsg]=useState(false);
+  const [toast,setToast]=useState(null); // {msg, type: "in"|"out"|"err"}
+
+  const showToast=(msg,type)=>{setToast({msg,type});setTimeout(()=>setToast(null),2500);};
 
   const loadStudents=async(useCache=true)=>{
     setRefreshing(true);
@@ -138,28 +141,42 @@ export default function App(){
   const isInside=id=>{const r=getRecord(id);return r&&!r.outTime;};
   const isDone=id=>{const r=getRecord(id);return r&&!!r.outTime;};
 
-  const handleCheckin=async student=>{
+  const handleCheckin=async(student,silent=false)=>{
     const rec=getRecord(student.id);
-    if(rec&&!rec.outTime){setSuccessInfo({type:"already_in",student,time:rec.inTime});setView("success");setSearch("");return;}
-    if(rec&&rec.outTime){setSuccessInfo({type:"already_out",student,inTime:rec.inTime,outTime:rec.outTime});setView("success");setSearch("");return;}
+    if(rec&&!rec.outTime){
+      if(silent){showToast(`${student.name} — 이미 입실 중입니다`,"err");}
+      else{setSuccessInfo({type:"already_in",student,time:rec.inTime});setView("success");setSearch("");}
+      return;
+    }
+    if(rec&&rec.outTime){
+      if(silent){showToast(`${student.name} — 이미 퇴실 완료`,"err");}
+      else{setSuccessInfo({type:"already_out",student,inTime:rec.inTime,outTime:rec.outTime});setView("success");setSearch("");}
+      return;
+    }
     const inTime=new Date().toISOString();
     const updated=[{id:Date.now(),studentId:student.id,inTime,outTime:null},...records];
     setRecords(updated);stor.set(`checkins:${selDate}`,updated);
     let ns="simulated";
     if(isConfigured&&student.parent){try{await sendSMS(settings.apiKey,settings.apiSecret,settings.from,student.parent,`은갈치영어학원 ${student.name} 학생이 ${fmtNotif(inTime)}에 재시실에 입실하였습니다.`);ns="sent";}catch{ns="failed";}}
     else if(!student.parent)ns="no_parent";
-    setSuccessInfo({type:"in",student,time:inTime,notifStatus:ns});setView("success");setSearch("");
+    if(silent){showToast(`${student.name} 입실 완료 ${ns==="sent"?"· 알림톡 발송":ns==="failed"?"· 알림톡 실패":""}`, "in");}
+    else{setSuccessInfo({type:"in",student,time:inTime,notifStatus:ns});setView("success");setSearch("");}
   };
-  const handleCheckout=async student=>{
+  const handleCheckout=async(student,silent=false)=>{
     const rec=getRecord(student.id);
-    if(!rec||rec.outTime){setSuccessInfo({type:"not_in",student});setView("success");setSearch("");return;}
+    if(!rec||rec.outTime){
+      if(silent){showToast(`${student.name} — 입실 기록 없음`,"err");}
+      else{setSuccessInfo({type:"not_in",student});setView("success");setSearch("");}
+      return;
+    }
     const outTime=new Date().toISOString();
     const updated=records.map(r=>r.studentId===student.id?{...r,outTime}:r);
     setRecords(updated);stor.set(`checkins:${selDate}`,updated);
     let ns="simulated";
     if(isConfigured&&student.parent){try{await sendSMS(settings.apiKey,settings.apiSecret,settings.from,student.parent,`은갈치영어학원 ${student.name} 학생이 ${fmtNotif(outTime)}에 재시실에 퇴실하였습니다.`);ns="sent";}catch{ns="failed";}}
     else if(!student.parent)ns="no_parent";
-    setSuccessInfo({type:"out",student,inTime:rec.inTime,outTime,notifStatus:ns});setView("success");setSearch("");
+    if(silent){showToast(`${student.name} 퇴실 완료 ${ns==="sent"?"· 알림톡 발송":ns==="failed"?"· 알림톡 실패":""}`, "out");}
+    else{setSuccessInfo({type:"out",student,inTime:rec.inTime,outTime,notifStatus:ns});setView("success");setSearch("");}
   };
   const handleSelect=s=>mode==="in"?handleCheckin(s):handleCheckout(s);
 
@@ -281,6 +298,18 @@ export default function App(){
           </div>
         </div>
       </div>
+
+      {/* 토스트 알림 */}
+      {toast&&(
+        <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,
+          background:toast.type==="in"?C.green:toast.type==="out"?C.primary:C.red,
+          color:"#fff",padding:"12px 24px",borderRadius:12,fontSize:14,fontWeight:700,
+          boxShadow:"0 4px 16px rgba(0,0,0,0.18)",whiteSpace:"nowrap",
+          animation:"slideDown 0.3s ease"}}>
+          {toast.type==="in"?"✓ ":toast.type==="out"?"✓ ":"✕ "}{toast.msg}
+          <style>{`@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
+        </div>
+      )}
 
       {/* 탭 */}
       <div style={{display:"flex",background:"#FFFFFF",borderBottom:`1px solid ${C.border}`}}>
@@ -597,13 +626,13 @@ export default function App(){
                         {x.rec&&!x.rec.outTime&&<div style={{fontSize:11,color:C.textFaint}}>경과 {elapsed(x.rec.inTime,now)}</div>}
                       </div>
                       {section.action==="in"&&(
-                        <button className="btn" onClick={()=>handleCheckin(x.student)}
+                        <button className="btn" onClick={()=>handleCheckin(x.student,true)}
                           style={{background:C.green,color:"#fff",borderRadius:9,padding:"8px 14px",fontSize:13,fontWeight:700,boxShadow:"0 2px 6px rgba(5,150,105,0.35)",whiteSpace:"nowrap"}}>
                           입실
                         </button>
                       )}
                       {section.action==="out"&&(
-                        <button className="btn" onClick={()=>handleCheckout(x.student)}
+                        <button className="btn" onClick={()=>handleCheckout(x.student,true)}
                           style={{background:C.primary,color:"#fff",borderRadius:9,padding:"8px 14px",fontSize:13,fontWeight:700,boxShadow:"0 2px 6px rgba(79,70,229,0.35)",whiteSpace:"nowrap"}}>
                           퇴실
                         </button>
