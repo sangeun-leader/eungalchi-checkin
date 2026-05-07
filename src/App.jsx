@@ -573,7 +573,7 @@ export default function App(){
 
           {selDate===todayStr()&&<div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12}}><div className="pulse" style={{width:7,height:7,borderRadius:"50%",background:C.green}}/><span style={{fontSize:12,color:C.textSub,fontWeight:600}}>실시간 · {fmtShort(now)}</span></div>}
 
-          {[{title:"응시예정 (미입실)",list:pending,c:C.amber,bg:C.amberLt,bd:C.amberBd},{title:"현재 입실 중",list:inside,c:C.green,bg:C.greenLt,bd:C.greenBd},{title:"퇴실 완료",list:done,c:C.primary,bg:C.primaryLt,bd:"#C7D2FE"}].map(section=>
+          {[{title:"응시예정 (미입실)",list:pending,c:C.amber,bg:C.amberLt,bd:C.amberBd,action:"in"},{title:"현재 입실 중",list:inside,c:C.green,bg:C.greenLt,bd:C.greenBd,action:"out"},{title:"퇴실 완료",list:done,c:C.primary,bg:C.primaryLt,bd:"#C7D2FE",action:null}].map(section=>
             section.list.length>0&&(
               <div key={section.title} style={{background:"#fff",borderRadius:14,border:`1px solid ${C.border}`,overflow:"hidden",marginBottom:12,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
                 <div style={{padding:"11px 16px",background:section.bg,borderBottom:`1px solid ${section.bd}`,display:"flex",justifyContent:"space-between"}}>
@@ -581,19 +581,33 @@ export default function App(){
                   <span style={{fontSize:13,fontWeight:700,color:section.c}}>{section.list.length}명</span>
                 </div>
                 {section.list.map((x,i)=>(
-                  <div key={x.student.id} style={{padding:"12px 16px",borderBottom:i<section.list.length-1?`1px solid ${C.border}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div key={x.student.id} style={{padding:"12px 16px",borderBottom:i<section.list.length-1?`1px solid ${C.border}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
                       <div style={{width:7,height:7,borderRadius:"50%",background:section.c,flexShrink:0}}/>
-                      <div>
+                      <div style={{minWidth:0}}>
                         <span style={{fontWeight:700,fontSize:15}}>{x.student.name}</span>
                         <span style={{color:C.textSub,fontSize:12,marginLeft:6}}>{x.student.class}</span>
                       </div>
                     </div>
-                    <div style={{textAlign:"right"}}>
-                      {x.rec?.inTime&&<div style={{fontSize:13,color:section.c,fontWeight:500}}>{fmt(x.rec.inTime)}{x.rec?.outTime&&` → ${fmt(x.rec.outTime)}`}</div>}
-                      {x.rec?.outTime&&<div style={{fontSize:11,color:C.textFaint}}>{elapsed(x.rec.inTime,x.rec.outTime)}</div>}
-                      {!x.rec&&<div style={{fontSize:12,color:C.textSub}}>{x.student.teacher}</div>}
-                      {x.rec&&!x.rec.outTime&&<div style={{fontSize:11,color:C.textFaint}}>경과 {elapsed(x.rec.inTime,now)}</div>}
+                    <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+                      <div style={{textAlign:"right"}}>
+                        {x.rec?.inTime&&<div style={{fontSize:12,color:section.c,fontWeight:500}}>{fmt(x.rec.inTime)}{x.rec?.outTime&&` → ${fmt(x.rec.outTime)}`}</div>}
+                        {x.rec?.outTime&&<div style={{fontSize:11,color:C.textFaint}}>{elapsed(x.rec.inTime,x.rec.outTime)}</div>}
+                        {!x.rec&&<div style={{fontSize:12,color:C.textSub}}>{x.student.teacher}</div>}
+                        {x.rec&&!x.rec.outTime&&<div style={{fontSize:11,color:C.textFaint}}>경과 {elapsed(x.rec.inTime,now)}</div>}
+                      </div>
+                      {section.action==="in"&&(
+                        <button className="btn" onClick={()=>handleCheckin(x.student)}
+                          style={{background:C.green,color:"#fff",borderRadius:9,padding:"8px 14px",fontSize:13,fontWeight:700,boxShadow:"0 2px 6px rgba(5,150,105,0.35)",whiteSpace:"nowrap"}}>
+                          입실
+                        </button>
+                      )}
+                      {section.action==="out"&&(
+                        <button className="btn" onClick={()=>handleCheckout(x.student)}
+                          style={{background:C.primary,color:"#fff",borderRadius:9,padding:"8px 14px",fontSize:13,fontWeight:700,boxShadow:"0 2px 6px rgba(79,70,229,0.35)",whiteSpace:"nowrap"}}>
+                          퇴실
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
