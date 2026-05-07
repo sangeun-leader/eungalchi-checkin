@@ -101,6 +101,7 @@ export default function App() {
   const [loadState, setLoadState] = useState("loading"); // loading | ok | error
   const [loadError, setLoadError] = useState("");
   const [sheetName, setSheetName] = useState(getSheetName());
+  const [lastUpdated, setLastUpdated] = useState("");
 
   const [view,setView]=useState("checkin");
   const [mode,setMode]=useState("in");
@@ -129,6 +130,7 @@ export default function App() {
       const cached = stor.get(cacheKey);
       if (cached && cached.ts && Date.now() - cached.ts < 3600000 && cached.data?.length > 0) {
         setStudents(cached.data);
+        setLastUpdated(new Date(cached.ts).toLocaleDateString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}));
         setLoadState("ok");
         setRefreshing(false);
         return;
@@ -136,6 +138,7 @@ export default function App() {
       const data = await fetchStudents();
       stor.set(cacheKey, { data, ts: Date.now() });
       setStudents(data);
+      setLastUpdated(new Date().toLocaleDateString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}));
       setLoadState("ok");
     } catch (e) {
       // 캐시라도 사용
@@ -260,7 +263,11 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:${C.border};border-radius:3px}
-        input,select,button{font-family:inherit}input::placeholder{color:${C.textFaint}}
+        input,select,button{font-family:inherit;outline:none;-webkit-tap-highlight-color:transparent;}
+        input::placeholder{color:${C.textFaint}}
+        input:focus{outline:none !important;box-shadow:none;}
+        button:focus{outline:none !important;box-shadow:none;}
+        button{-webkit-appearance:none;}
         .row:hover{background:${C.primaryLt} !important;transform:translateX(4px)}
         .btn:hover{opacity:0.85}
         .pulse{animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -276,8 +283,8 @@ export default function App() {
           <div>
             <div style={{fontWeight:900,fontSize:20,color:C.primary}}>은갈치영어학원</div>
             <div style={{fontSize:11,color:C.textSub}}>
-              📊 {sheetName} 시트 · {students.length}명
-              {loadError && <span style={{color:C.amber}}> · ⚠️ {loadError}</span>}
+              {sheetName} 시트 · 명단 업데이트: {lastUpdated || "로딩중..."}
+              {loadError && <span style={{color:C.amber}}> · {loadError}</span>}
             </div>
           </div>
         </div>
@@ -427,12 +434,12 @@ export default function App() {
             {TEACHERS.map(t=>(<button key={t} className="btn" onClick={()=>setTeacherFilter(t)} style={{padding:"7px 16px",borderRadius:20,fontSize:14,fontWeight:700,background:teacherFilter===t?"#7C3AED":C.bgCard,color:teacherFilter===t?"#fff":C.textMd,border:`1px solid ${teacherFilter===t?"#7C3AED":C.border}`,boxShadow:teacherFilter===t?"0 2px 8px rgba(124,58,237,0.3)":"none"}}>{t}</button>))}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
-            {[{l:"⏳ 미응시",v:pending.length,c:C.amber,bg:C.amberLt,bd:"#FCD34D"},{l:"🟢 입실중",v:inside.length,c:C.green,bg:C.greenLt,bd:"#86EFAC"},{l:"✅ 퇴실완료",v:done.length,c:C.primary,bg:C.primaryLt,bd:C.border}].map(s=>(<div key={s.l} style={{background:s.bg,borderRadius:14,padding:"16px 12px",border:`1px solid ${s.bd}`,textAlign:"center"}}><div style={{fontSize:32,fontWeight:900,color:s.c}}>{s.v}</div><div style={{fontSize:13,color:C.textMd,marginTop:3,fontWeight:600}}>{s.l}</div></div>))}
+            {[{l:"미응시",v:pending.length,c:C.amber,bg:C.amberLt,bd:"#FCD34D",icon:"⏳"},{l:"입실중",v:inside.length,c:C.green,bg:C.greenLt,bd:"#86EFAC",icon:"🟢"},{l:"퇴실완료",v:done.length,c:C.primary,bg:C.primaryLt,bd:C.border,icon:"✅"}].map(s=>(<div key={s.l} style={{background:s.bg,borderRadius:14,padding:"16px 12px",border:`1px solid ${s.bd}`,textAlign:"center"}}><div style={{fontSize:32,fontWeight:900,color:s.c}}>{s.v}</div><div style={{fontSize:13,color:s.c,marginTop:3,fontWeight:600}}>{s.l}</div></div>))}
           </div>
           {selDate===todayStr()&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><div className="pulse" style={{width:8,height:8,borderRadius:"50%",background:C.green}}/><span style={{fontSize:13,color:C.textSub,fontWeight:600}}>실시간 · {fmtDateShort(now)}</span></div>}
-          {pending.length>0&&(<div style={S.card}><div style={{...S.cardHead,background:C.amberLt,borderBottom:"1px solid #FCD34D"}}><span style={{fontSize:14,fontWeight:700,color:C.amber}}>⏳ 응시예정 (미입실)</span><span style={{fontSize:14,color:C.amber,fontWeight:700}}>{pending.length}명</span></div>{pending.map((x,i)=>(<div key={x.student.id} style={{padding:"13px 18px",borderBottom:i<pending.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:8,height:8,borderRadius:"50%",background:C.amber}}/><span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span><span style={{color:C.textSub,fontSize:13}}>{x.student.class}</span></div><span style={{fontSize:13,color:C.textMd,fontWeight:600}}>{x.student.teacher}</span></div>))}</div>)}
-          {inside.length>0&&(<div style={S.card}><div style={{...S.cardHead,background:C.greenLt,borderBottom:"1px solid #86EFAC"}}><span style={{fontSize:14,fontWeight:700,color:C.green}}>🟢 현재 입실 중</span><span style={{fontSize:14,color:C.green,fontWeight:700}}>{inside.length}명</span></div>{inside.map((x,i)=>(<div key={x.student.id} style={{padding:"13px 18px",borderBottom:i<inside.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:8,height:8,borderRadius:"50%",background:C.green}}/><div><span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span><span style={{color:C.textSub,fontSize:13,marginLeft:8}}>{x.student.class}</span></div></div><div style={{textAlign:"right"}}><div style={{fontSize:14,color:C.green,fontWeight:600}}>입실 {fmt(x.rec.inTime)}</div><div style={{fontSize:12,color:C.textFaint}}>경과 {elapsed(x.rec.inTime,now)}</div></div></div>))}</div>)}
-          {done.length>0&&(<div style={S.card}><div style={{...S.cardHead,background:C.primaryLt,borderBottom:`1px solid ${C.border}`}}><span style={{fontSize:14,fontWeight:700,color:C.primary}}>✅ 퇴실 완료</span><span style={{fontSize:14,color:C.textSub,fontWeight:600}}>{done.length}명</span></div>{done.map((x,i)=>(<div key={x.student.id} style={{padding:"13px 18px",borderBottom:i<done.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:8,height:8,borderRadius:"50%",background:C.primary}}/><div><span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span><span style={{color:C.textSub,fontSize:13,marginLeft:8}}>{x.student.class}</span></div></div><div style={{textAlign:"right"}}><div style={{fontSize:13,color:C.textMd}}>{fmt(x.rec.inTime)} → {fmt(x.rec.outTime)}</div><div style={{fontSize:12,color:C.textFaint}}>{elapsed(x.rec.inTime,x.rec.outTime)}</div></div></div>))}</div>)}
+          {pending.length>0&&(<div style={S.card}><div style={{...S.cardHead,background:C.amberLt,borderBottom:"1px solid #FCD34D"}}><span style={{fontSize:14,fontWeight:700,color:C.amber}}>응시예정 (미입실)</span><span style={{fontSize:14,color:C.amber,fontWeight:700}}>{pending.length}명</span></div>{pending.map((x,i)=>(<div key={x.student.id} style={{padding:"13px 18px",borderBottom:i<pending.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:8,height:8,borderRadius:"50%",background:C.amber}}/><span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span><span style={{color:C.textSub,fontSize:13}}>{x.student.class}</span></div><span style={{fontSize:13,color:C.textMd,fontWeight:600}}>{x.student.teacher}</span></div>))}</div>)}
+          {inside.length>0&&(<div style={S.card}><div style={{...S.cardHead,background:C.greenLt,borderBottom:"1px solid #86EFAC"}}><span style={{fontSize:14,fontWeight:700,color:C.green}}>입실 중</span><span style={{fontSize:14,color:C.green,fontWeight:700}}>{inside.length}명</span></div>{inside.map((x,i)=>(<div key={x.student.id} style={{padding:"13px 18px",borderBottom:i<inside.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:8,height:8,borderRadius:"50%",background:C.green}}/><div><span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span><span style={{color:C.textSub,fontSize:13,marginLeft:8}}>{x.student.class}</span></div></div><div style={{textAlign:"right"}}><div style={{fontSize:14,color:C.green,fontWeight:600}}>입실 {fmt(x.rec.inTime)}</div><div style={{fontSize:12,color:C.textFaint}}>경과 {elapsed(x.rec.inTime,now)}</div></div></div>))}</div>)}
+          {done.length>0&&(<div style={S.card}><div style={{...S.cardHead,background:C.primaryLt,borderBottom:`1px solid ${C.border}`}}><span style={{fontSize:14,fontWeight:700,color:C.primary}}>퇴실 완료</span><span style={{fontSize:14,color:C.textSub,fontWeight:600}}>{done.length}명</span></div>{done.map((x,i)=>(<div key={x.student.id} style={{padding:"13px 18px",borderBottom:i<done.length-1?`1px solid ${C.borderSub}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:8,height:8,borderRadius:"50%",background:C.primary}}/><div><span style={{fontWeight:700,fontSize:16,color:C.text}}>{x.student.name}</span><span style={{color:C.textSub,fontSize:13,marginLeft:8}}>{x.student.class}</span></div></div><div style={{textAlign:"right"}}><div style={{fontSize:13,color:C.textMd}}>{fmt(x.rec.inTime)} → {fmt(x.rec.outTime)}</div><div style={{fontSize:12,color:C.textFaint}}>{elapsed(x.rec.inTime,x.rec.outTime)}</div></div></div>))}</div>)}
           {unified.length===0&&<div style={{padding:56,textAlign:"center",color:C.textFaint}}><div style={{fontSize:44,marginBottom:12}}>📋</div><div style={{fontSize:16}}>해당 날짜에 기록이 없습니다</div></div>}
 
           {/* 설정 */}
